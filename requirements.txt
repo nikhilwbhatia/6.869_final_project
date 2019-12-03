@@ -10,3 +10,4 @@ mock
 statsmodels
 scikit-image
 imageio
+opencv-python
