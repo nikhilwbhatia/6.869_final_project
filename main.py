@@ -1,3 +1,4 @@
+import pdb
 import numpy as np
 
 
@@ -33,7 +34,6 @@ from dataset import dataLoaderTrain, dataLoaderVal, dataLoaderTest
 
 if __name__ == "__main__":
     model = DenseNet121(num_classes).cuda()
-    model = torch.nn.DataParallel(model).cuda()
     batch, losst, losse = CheXpertTrainer.train(model, dataLoaderTrain, dataLoaderVal, num_classes, train_max_epoch, checkpoint=None)
     print('Model Trained')
 

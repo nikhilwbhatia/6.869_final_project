@@ -87,7 +87,7 @@ class CheXpertDataset(Dataset):
         label = self.labels[i]
         if self.transform is not None:
             image = self.transform(image)
-        return image, torch.FloatTensor(label)
+        return image, torch.cuda.FloatTensor(label)
 
     def __len__(self):
         return len(self.images)

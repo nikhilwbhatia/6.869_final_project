@@ -83,7 +83,7 @@ class CheXpertTrainer():
 
             varTarget = target.cuda(non_blocking=True)
 
-            # varTarget = target.cuda()
+            #varTarget = target.cuda()
 
 
             varOutput = model(varInput)
