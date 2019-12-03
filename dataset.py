@@ -27,6 +27,7 @@ import random
 use_gpu = torch.cuda.is_available()
 
 # Data Transformations
+image_resize = (320,320)
 crop_size = 224
 
 train_file_path = '../CheXpert-v1.0-small/train.csv'
@@ -64,16 +65,16 @@ class CheXpertDataset(Dataset):
 
                 for j in range(14):
                     if label[j]:
-                        class_label = int(lable[j])
+                        class_label = float(label[j])
                         if class_label == -1:
                             assert policy == "ones" or policy == "zeroes"
-                            lable[j] = 1 if policy == "ones" else 0
+                            label[j] = 1 if policy == "ones" else 0
                         else:
-                            lable[j] = int(lable[j])
+                            label[j] = int(class_label)
                     else:
                         label[j] = 0
 
-                images.appen('../' + image_name)
+                images.append('../' + image_name)
                 labels.append(label)
 
             self.images = images
@@ -89,7 +90,7 @@ class CheXpertDataset(Dataset):
         return image, torch.FloatTensor(label)
 
     def __len__(self):
-        return leb(self.images)
+        return len(self.images)
 
 
 
@@ -98,12 +99,21 @@ class CheXpertDataset(Dataset):
 
 normalize = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 transformations = []
+transformations.append(transforms.Resize(image_resize))
 transformations.append(transforms.RandomResizedCrop(crop_size))
 transformations.append(transforms.RandomHorizontalFlip())
-transformations.append(transfroms.ToTensor())
+transformations.append(transforms.ToTensor())
 transformations.append(normalize)
-transform_sequence = transfroms.Compose(transformations)
+transform_sequence = transforms.Compose(transformations)
 
 dataset = CheXpertDataset(train_file_path, transform_sequence, policy="ones")
 test_dataset, train_dataset = random_split(dataset, [500, len(dataset) - 500])
 validation_dataset = CheXpertDataset(validation_file_path, transform_sequence)
+
+dataLoaderTrain = DataLoader(dataset=train_dataset, batch_size=train_batch_size, shuffle=True,  num_workers=24, pin_memory=True)
+dataLoaderVal = DataLoader(dataset=validation_dataset, batch_size=train_batch_size, shuffle=False, num_workers=24, pin_memory=True)
+dataLoaderTest = DataLoader(dataset=test_dataset, num_workers=24, pin_memory=True)
+
+
+
+
