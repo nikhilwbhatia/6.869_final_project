@@ -1,0 +1,12 @@
+torch
+torchvision
+sklearn
+scipy
+numpy
+twilio
+Pillow
+tqdm
+mock
+statsmodels
+scikit-image
+imageio
