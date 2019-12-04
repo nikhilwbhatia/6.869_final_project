@@ -32,6 +32,18 @@ use_gpu = torch.cuda.is_available()
 num_classes = 14
 train_max_epoch = 3
 
+WEIGHT_FULL_LOSS = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+WEIGHT_ONLY_EDEMA = [0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0, 0, 0]
+WEIGHT_EDEMA_01_LO = [0, 0, 0, 0.1, 0, 1.0, 0, 0, 0, 0, 0, 0, 0, 0]
+WEIGHT_EDEMA_05_LO = [0, 0, 0, 0.5, 0, 1.0, 0, 0, 0, 0, 0, 0, 0, 0]
+WEIGHT_EDEMA_01_PE = [0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0.1, 0, 0, 0]
+WEIGHT_EDEMA_05_PE = [0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0.5, 0, 0, 0]
+WEIGHT_EDEMA_01_LO_01_PE = [0, 0, 0, 0.1, 0, 1.0, 0, 0, 0, 0, 0.1, 0, 0, 0]
+WEIGHT_EDEMA_01_LO_05_PE = [0, 0, 0, 0.1, 0, 1.0, 0, 0, 0, 0, 0.5, 0, 0, 0]
+WEIGHT_EDEMA_05_LO_01_PE = [0, 0, 0, 0.5, 0, 1.0, 0, 0, 0, 0, 0.1, 0, 0, 0]
+WEIGHT_EDEMA_05_LO_05_PE = [0, 0, 0, 0.5, 0, 1.0, 0, 0, 0, 0, 0.5, 0, 0, 0]
+
+
 class CheXpertTrainer():
 
     def train(model, dataLoaderTrain, dataLoaderVal, num_classes, train_max_epoch, checkpoint):
@@ -40,7 +52,8 @@ class CheXpertTrainer():
         optimizer = optim.Adam (model.parameters(), lr=0.0001, betas=(0.9,0.999), eps=1e-8, weight_decay=1e-5)
 
         # Settings: Loss function (We will be adjusting primarily for this in our experiments)
-        loss = torch.nn.BCELoss(size_average = True)
+        class_weights = torch.FloatTensor(WEIGHT_FULL_LOSS).cuda()
+        loss = torch.nn.BCELoss(weight=class_weights, size_average = True)
         # Can change in the future by passing in flags
 
         # Load checkpoint (functionality to resume an experiment from a checkpoint if we want)
@@ -62,7 +75,7 @@ class CheXpertTrainer():
                 torch.save({'epoch': epoch,
                             'state_dict': model.state_dict(),
                             'best_loss': lossMIN,
-                            'optimizer': optimizer.state_dict()}, 'm-epoch'+str(epoch)+str(lossVal))
+                            'optimizer': optimizer.state_dict()}, 'm-epoch'+str(epoch)+'full_loss.pth.tar')
                 print('Epoch [' + str(epoch + 1) + '] [SAVE] loss= ' + str(lossVal))
 
             else:
@@ -79,9 +92,11 @@ class CheXpertTrainer():
 
         model.train()
 
-        for batchID, (varInput, target) in enumerate(dataLoaderTrain):
+        for batchID, (varInput, target) in tqdm(enumerate(dataLoaderTrain)):
 
-            varTarget = target.cuda(non_blocking=True)
+            varInput = varInput.cuda()
+            varTarget = target.cuda()
+            #varTarget = target.cuda(non_blocking=True)
 
             #varTarget = target.cuda()
 
@@ -107,8 +122,8 @@ class CheXpertTrainer():
                 losseval.append(le)
 
                 print(batchID)
-                print(l)
-                print(le)
+                print("loss: ", l)
+                print("val loss:", le)
 
         return batch, losstrain, losseval
 
@@ -121,8 +136,10 @@ class CheXpertTrainer():
         lossValNorm = 0
 
         with torch.no_grad():
-            for i, (varInput, target) in enumerate(dataLoaderVal):
-                target = target.cuda(non_blocking=True)
+            for i, (varInput, target) in tqdm(enumerate(dataLoaderVal)):
+                varInput = varInput.cuda()
+                target = target.cuda()
+                #target = target.cuda(non_blocking=True)
                 varOutput = model(varInput)
 
                 losstensor = loss(varOutput, target)
@@ -175,6 +192,7 @@ class CheXpertTrainer():
 
                 bs, c, h, w = input.size()
                 varInput = input.view(-1, c, h, w)
+                varInput = varInput.cuda()
 
                 out = model(varInput)
                 outPRED = torch.cat((outPRED, out), 0)

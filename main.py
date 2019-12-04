@@ -1,12 +1,11 @@
 import pdb
 import numpy as np
-
-
+from sklearn.metrics.ranking import roc_auc_score
+import sklearn.metrics as metrics
 import torch
 
-
 use_gpu = torch.cuda.is_available()
-
+print("USING GPU? : ", use_gpu)
 
 # Data Transformations
 image_resize = (320,320)
@@ -19,17 +18,16 @@ pretrained_nn = False
 num_classes = 14
 
 # Training Settings
-train_batch_size = 64
+train_batch_size = 4
 train_max_epoch = 3
 
 # File Imports
-
 from densenet import DenseNet121
 from dataset import CheXpertDataset
 from train import CheXpertTrainer
-
 from dataset import dataLoaderTrain, dataLoaderVal, dataLoaderTest
 
+CLASS_NAMES = ['No Finding', 'Enlarged Cardiomediastinum', 'Cardiomegaly', 'Lung Opacity', 'Lung Lesion', 'Edema', 'Consolidation', 'Pneumonia', 'Atelectasis', 'Pneumothorax', 'Pleural Effusion', 'Pleural Other', 'Fracture', 'Support Devices']
 
 
 if __name__ == "__main__":
@@ -43,6 +41,20 @@ if __name__ == "__main__":
 
     print(losstn)
     print(losse)
+    
+    lt = losstn[0] + losstn[2] + losstn[3]
+    le = losse[0] + losse[2] + losse[3] 
+    batch = [i*35 for i in range(len(lt))]
+
+    plt.plot(batch, lt, label = "train")
+    plt.plot(batch, le, label = "eval")
+    plt.xlabel("Nb of batches (size_batch = 64)")
+    plt.ylabel("BCE loss")
+    plt.title("BCE loss evolution")
+    plt.legend()
+
+    plt.savefig("chart5.png", dpi=1000)
+    plt.show()
 
 
 

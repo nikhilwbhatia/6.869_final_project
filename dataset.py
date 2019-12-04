@@ -44,6 +44,9 @@ class_names = ['No Finding', 'Enlarged Cardiomediastinum', 'Cardiomegaly', 'Lung
                        'Lung Lesion', 'Edema', 'Consolidation', 'Pneumonia', 'Atelectasis', 'Pneumothorax', 
                                       'Pleural Effusion', 'Pleural Other', 'Fracture', 'Support Devices']
 
+WEIGHT_FULL_LOSS = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+
+
 class CheXpertDataset(Dataset):
     def __init__(self, image_list_file, transform=None, policy="ones"):
         """
@@ -87,7 +90,7 @@ class CheXpertDataset(Dataset):
         label = self.labels[i]
         if self.transform is not None:
             image = self.transform(image)
-        return image, torch.cuda.FloatTensor(label)
+        return image, torch.FloatTensor(label)
 
     def __len__(self):
         return len(self.images)
@@ -110,9 +113,9 @@ dataset = CheXpertDataset(train_file_path, transform_sequence, policy="ones")
 test_dataset, train_dataset = random_split(dataset, [500, len(dataset) - 500])
 validation_dataset = CheXpertDataset(validation_file_path, transform_sequence)
 
-dataLoaderTrain = DataLoader(dataset=train_dataset, batch_size=train_batch_size, shuffle=True,  num_workers=24, pin_memory=True)
-dataLoaderVal = DataLoader(dataset=validation_dataset, batch_size=train_batch_size, shuffle=False, num_workers=24, pin_memory=True)
-dataLoaderTest = DataLoader(dataset=test_dataset, num_workers=24, pin_memory=True)
+dataLoaderTrain = DataLoader(dataset=train_dataset, batch_size=train_batch_size, shuffle=True,  num_workers=24)
+dataLoaderVal = DataLoader(dataset=validation_dataset, batch_size=train_batch_size, shuffle=False, num_workers=24)
+dataLoaderTest = DataLoader(dataset=test_dataset, num_workers=24)
 
 
 
